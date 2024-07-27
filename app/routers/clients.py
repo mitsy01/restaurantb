@@ -1,11 +1,10 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
-from aiogram.utils.markdown import hbold
 from aiogram.fsm.context import FSMContext
 
 from app.data import open_files, clients
 from app.keyboards.clients import build_clients_keyboard, build_clnt_action_keyboard
-from app.forms.client import ProductForm
+from app.forms.client import ClientForm
 
 
 client_router = Router()
@@ -20,7 +19,7 @@ async def edit_or_answer(message: Message, text: str, keyboard=None, *args, **kw
 
 @client_router.message(F.text == "Список кліентів")
 async def show_clients(message: Message, state: FSMContext):
-    clients = open_files.get_c()
+    clients = open_files.get_clients()
     keyboard = build_clients_keyboard(clients)
     text = "Список кліентів"
     return await edit_or_answer(message=message, text=text, keyboard=keyboard)
@@ -40,11 +39,11 @@ async def clientt_actions(call_back: CallbackQuery, state: FSMContext):
 @client_router.message(F.text == "Додати нового кліента")
 async def add_clients(message: Message, state: FSMContext):
     await state.clear()
-    await state.set_state(ProductForm.name)
+    await state.set_state(ClientForm.name)
     await message.answer(text="Введіть ім'я кліента")
 
 
-@client_router.message(ProductForm.name)
+@client_router.message(ClientForm.name)
 async def add_client_action(message: Message, state: FSMContext):
     data = await state.update_data(name=message.text)
     await state.clear()
@@ -55,7 +54,7 @@ async def add_client_action(message: Message, state: FSMContext):
 @client_router.callback_query(F.data.startswith("booked_clnt"))
 async def booked_clients(call_back: CallbackQuery, state: FSMContext):
     client = call_back.data.split("_")[-1]
-    msg = client.booked_clients(client)
+    msg = clients.booked_client(client)
     await call_back.message.answer(text=msg)
 
 
